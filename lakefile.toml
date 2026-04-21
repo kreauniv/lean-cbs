@@ -1,0 +1,15 @@
+name = "lean-cbs"
+version = "0.1.0"
+defaultTargets = ["lean-cbs"]
+
+[[require]]
+name = "mathlib"
+scope = "leanprover-community"
+rev = "v4.29.0"
+
+[[lean_lib]]
+name = "LeanCbs"
+
+[[lean_exe]]
+name = "lean-cbs"
+root = "Main"
