@@ -136,39 +136,36 @@ theorem SafeProg.allSafe {α : Type} {env : CapEnv} {prog : CapM α}
   | flatMapSafe _ _ _ _ ih1 ih2 =>
       exact AllSafe.flatMap ih1 ih2
 
-/- ===========================================================
-   Interpreter
-   =========================================================== -/
 
 /-
-`CapM.run` now delegates every cap-layer decision to `CapCmd.check`.
+`CapM.run` interpreter function - it now delegates every cap-layer decision to `CapCmd.check`.
 The only branches that remain in `IO` are the actual filesystem calls
 and the recursive continuation. If `SafeProg env prog` holds then the
-`.error e` branch below is unreachable (see `SafeProg.checkHead_ok`).
+`.error e` branch below is unreachable.
 -/
-  partial def CapM.run (env : CapEnv) : CapM α → IO (Except CapError α)
-    | .pure a => return .ok a
-    | .cons cmd k =>
-      match CapCmd.check env cmd with
-      | .error e => return .error e
-      | .ok _ =>
-        match cmd with
-        | .read c =>
-          match c.resource with
-          | .file path => do
-            let contents ← IO.FS.readFile path
-            CapM.run env (k contents)
-        | .write c s =>
-          match c.resource with
-          | .file path => do
-            IO.FS.writeFile path s
-            CapM.run env (k ())
-        | .delete c =>
-          match c.resource with
-          | .file path => do
-            IO.FS.removeFile path
-            CapM.run env (k ())
+partial def CapM.run (env : CapEnv) : CapM α → IO (Except CapError α)
+  | .pure a => return .ok a
+  | .cons cmd k =>
+    match CapCmd.check env cmd with
+    | .error e => return .error e
+    | .ok _ =>
+      match cmd with
+      | .read c =>
+        match c.resource with
+        | .file path => do
+          let contents ← IO.FS.readFile path
+          CapM.run env (k contents)
+      | .write c s =>
+        match c.resource with
+        | .file path => do
+          IO.FS.writeFile path s
+          CapM.run env (k ())
+      | .delete c =>
+        match c.resource with
+        | .file path => do
+          IO.FS.removeFile path
+          CapM.run env (k ())
 
-  def CapM.runSafe (env : CapEnv) (prog : CapM α) (_h : SafeProg env prog) :
-      IO (Except CapError α) :=
-    CapM.run env prog
+def CapM.runSafe (env : CapEnv) (prog : CapM α) (_h : SafeProg env prog) :
+    IO (Except CapError α) :=
+  CapM.run env prog

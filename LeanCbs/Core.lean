@@ -25,7 +25,7 @@ structure Cap where
   resource : Resource
   authority : Authority
   identity : CapId
-  deriving Repr
+  deriving DecidableEq, Repr
 
 inductive CapError where
   | invalidCap     : CapId → CapError
@@ -74,6 +74,9 @@ Held Predicate for checking for membership
 -/
 def CapEnv.valid (env : CapEnv) (c : Cap) : Prop :=
   c ∈ env.wallet
+
+instance (env : CapEnv) (c : Cap) : Decidable (env.valid c) :=
+  inferInstanceAs (Decidable (c ∈ env.wallet))
 
 /-
   checks if capability c is in the wallet.
