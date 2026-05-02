@@ -125,6 +125,54 @@ inductive SafeProg : {α : Type} → CapEnv → CapM α → Prop where
       (h2 : ∀ a, SafeProg env (f a)) :
       SafeProg env (CapM.flatMap f x)
 
+/- ===========================================================
+   Authority ordering and attenuation
+   =========================================================== -/
+
+/-
+`Authority.le a b` means `a` is at most as powerful as `b`.
+read is the weakest authority and delete is the strongest.
+-/
+def Authority.le (a b : Authority) : Prop :=
+  match a, b with
+  | .read, _  => True
+  | .write, .write => True
+  | .write, .delete => True
+  | .delete, .delete => True
+  | _,  _ => False
+
+theorem Authority.le_refl (a : Authority) : a.le a := by
+  cases a <;> simp[Authority.le]
+
+theorem Authority.le_trans {a b c : Authority}
+    (h1 : a.le b) (h2 : b.le c) : a.le c := by
+  cases a <;> cases b <;> cases c <;> simp_all [Authority.le]
+
+theorem Authority.le_antisymm {a b : Authority}
+    (h1 : a.le b) (h2 : b.le a) : a = b := by
+  cases a <;> cases b <;> simp_all [Authority.le]
+
+/-
+`Attenuates child parent` holds when `child` has the same resource as
+`parent` but no more authority. Delegation must always attenuate.
+-/
+structure Attenuates (child parent : Cap) : Prop where
+  sameResource : child.resource = parent.resource
+  weakerAuth : child.authority.le parent.authority
+
+/-
+Issue a new capability that is a strict weakening of an existing one.
+The caller must supply:
+`hv`  : proof that `parent` is in the current wallet
+`ha`  : proof that the requested authority is leq parent's authority
+-/
+def CapEnv.attenuate (env : CapEnv) (parent : Cap) (auth : Authority)
+    (_ : env.valid parent) (_ : auth.le parent.authority) : Cap × CapEnv :=
+  let child : Cap := { resource := parent.resource, authority := auth, identity := env.nextId }
+  (child, { env with
+    nextId := env.nextId + 1
+    wallet := child :: env.wallet })
+
 theorem SafeProg.mono_wallet {α : Type} {env₁ env₂ : CapEnv} {prog : CapM α}
     (hsub : env₁.wallet ⊆ env₂.wallet)
     (h : SafeProg env₁ prog) :

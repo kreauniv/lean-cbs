@@ -23,6 +23,7 @@ The file `leancap-report.pdf` contains a full project report.
 | `LeanCbs/Parser.lean` | Three-pass JSON parser and proof synthesizer |
 | `Main.lean` | End-to-end demo including a prompt injection attack scenario |
 | `Tests.lean` | Test suite: 5 suites covering basic ops, value binding, elaboration errors, wallet validity, and injection attacks |
+| `MultiAgent.lean` | multi-agent extension, currently in progress| 
 | `leancap-report.pdf` | Project report |
 
 ## Running
