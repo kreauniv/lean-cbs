@@ -120,8 +120,6 @@ partial def parseDsl (j : Json) : Except ParseError DslNode := do
 
 /-
   Look up `name` in `sc`, returning the bound `Fin sc.length` index if found.
-  Walks the list and lifts the recursive index through `Fin.succ`, so the
-  bound is maintained without any runtime arithmetic.
 -/
 def Scope.indexOf : (sc : Scope) → String → Option (Fin sc.length)
   | [], _ => none
@@ -252,8 +250,7 @@ def lower (env : CapEnv) {sc : Scope} : Resolved sc →
           | some ⟨β, bodyFn⟩ =>
               -- Fin.cases s vs : Fin (sc.length + 1) → String prepends `s` to `vs`.
               -- This is the extended context for the body under scope (name :: sc).
-              -- flatMapSafe's h2 requires `∀ s, SafeProg env (f s)` — satisfied here
-              -- because SafeProg never inspects the string value itself.
+              -- flatMapSafe's h2 requires `∀ s, SafeProg env (f s)` which is satisfied here
               some ⟨β, fun vs =>
                 ⟨(CapM.read c).flatMap (fun s => (bodyFn (Fin.cases s vs)).prog),
                  SafeProg.flatMapSafe env (CapM.read c)

@@ -27,11 +27,7 @@ def CapCmd.check (env : CapEnv) : {β : Type} → CapCmd β → Except CapError 
 
 
 /-
-`AllSafe env prog` says that every command anywhere in `prog` (head, and all
-continuations after every possible runtime input) passes `CapCmd.check`.
-The `cons` case carries `∀ b, AllSafe env (k b)` — universal over the
-continuation's input, exactly because we cannot inspect runtime values
-at proof time.
+Every command in `prog`, at every step, passes the capability check under `env`.
 -/
 inductive AllSafe (env : CapEnv) : {α : Type} → CapM α → Prop where
   | pure {α : Type} (a : α) : AllSafe env (CapM.pure a)
@@ -41,9 +37,7 @@ inductive AllSafe (env : CapEnv) : {α : Type} → CapM α → Prop where
       AllSafe env (CapM.cons cmd k)
 
 /-
-`AllSafe` is preserved by `flatMap`: if every reachable command in `x`
-checks and every reachable command in every `f a` checks, then so does
-every reachable command in `x.flatMap f`.
+`AllSafe` is preserved under `flatMap`.
 -/
 theorem AllSafe.flatMap {α β : Type} {env : CapEnv} {x : CapM α}
     {f : α → CapM β} (hx : AllSafe env x)
